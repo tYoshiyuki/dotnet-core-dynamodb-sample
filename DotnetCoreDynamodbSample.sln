@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29001.49
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotnetCoreDynamodbSample", "DotnetCoreDynamodbSample\DotnetCoreDynamodbSample.csproj", "{0118C1E4-B792-4271-B632-D1260606660D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0118C1E4-B792-4271-B632-D1260606660D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0118C1E4-B792-4271-B632-D1260606660D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0118C1E4-B792-4271-B632-D1260606660D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0118C1E4-B792-4271-B632-D1260606660D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {5A2E0F48-0D39-461C-B264-85FA03B7FBCF}
+	EndGlobalSection
+EndGlobal
