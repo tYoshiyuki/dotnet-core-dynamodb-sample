@@ -13,6 +13,9 @@ namespace DotnetCoreDynamodbSample.Services
         Task<Dictionary<string, AttributeValue>> GetItemsAsync(GetItemRequest request);
         Task CreateTableAsync(CreateTableRequest request);
         Task DeleteTableAsync(DeleteTableRequest request);
+        Task PutItemAsync(PutItemRequest request);
+        Task UpdateItemAsync(UpdateItemRequest request);
+        Task DeleteItemAsync(DeleteItemRequest request);
     }
 
     public class DynamoDbService : IDynamoDbService
@@ -45,6 +48,21 @@ namespace DotnetCoreDynamodbSample.Services
         public async Task DeleteTableAsync(DeleteTableRequest request)
         {
             await _amazonDynamoDb.DeleteTableAsync(request);
+        }
+
+        public async Task PutItemAsync(PutItemRequest request)
+        {
+            await _amazonDynamoDb.PutItemAsync(request);
+        }
+
+        public async Task UpdateItemAsync(UpdateItemRequest request)
+        {
+            await _amazonDynamoDb.UpdateItemAsync(request);
+        }
+
+        public async Task DeleteItemAsync(DeleteItemRequest request)
+        {
+            await _amazonDynamoDb.DeleteItemAsync(request);
         }
     }
 }

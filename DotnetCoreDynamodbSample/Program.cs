@@ -78,7 +78,68 @@ namespace DotnetCoreDynamodbSample
                 });
             }
 
-            // TODO insert, delete item の実装
+            await service.PutItemAsync(new PutItemRequest
+            {
+                TableName = tableName,
+                Item = new Dictionary<string, AttributeValue>()
+                {
+                      { "Id", new AttributeValue { N = "201" }},
+                      { "Title", new AttributeValue { S = "Book 201 Title" }},
+                      { "ISBN", new AttributeValue { S = "11-11-11-11" }},
+                      { "Price", new AttributeValue { N = "100" }},
+                      { "Authors", new AttributeValue { SS = new List<string>{"Author1", "Author2"} }}
+                }
+            });
+
+            // 確認用の関数
+            async void outItem()
+            {
+                var item = await service.GetItemsAsync(new GetItemRequest
+                {
+                    TableName = tableName,
+                    Key = new Dictionary<string, AttributeValue>() { { "Id", new AttributeValue { N = "201" } } }
+                });
+                item.TryGetValue("Id", out AttributeValue id);
+                Console.WriteLine("---- Output Item Info ----");
+                Console.WriteLine($"Id:{id?.N.ToString() ?? "No Data"}");
+
+                item.TryGetValue("Price", out AttributeValue price);
+                Console.WriteLine($"Price:{price?.N.ToString() ?? "No Data"}");
+            }
+            outItem();
+
+            await service.UpdateItemAsync(new UpdateItemRequest
+            {
+                TableName = tableName,
+                Key = new Dictionary<string, AttributeValue>() { { "Id", new AttributeValue { N = "201" } } },
+                ExpressionAttributeNames = new Dictionary<string, string>()
+                {
+                    {"#A", "Authors"},
+                    {"#P", "Price"},
+                    {"#NA", "NewAttribute"},
+                    {"#I", "ISBN"}
+                },
+                ExpressionAttributeValues = new Dictionary<string, AttributeValue>()
+                {
+                    {":auth", new AttributeValue { SS = {"Author YY","Author ZZ"}}},
+                    {":p", new AttributeValue {N = "1"}},
+                    {":newattr", new AttributeValue {S = "someValue"}},
+                },
+                // This expression does the following:
+                // 1) Adds two new authors to the list
+                // 2) Reduces the price
+                // 3) Adds a new attribute to the item
+                // 4) Removes the ISBN attribute from the item
+                UpdateExpression = "ADD #A :auth SET #P = #P - :p, #NA = :newattr REMOVE #I"
+            });
+            outItem();
+
+            await service.DeleteItemAsync(new DeleteItemRequest
+            {
+                TableName = tableName,
+                Key = new Dictionary<string, AttributeValue>() { { "Id", new AttributeValue { N = "201" } } }
+            });
+            outItem();
 
             await service.DeleteTableAsync(new DeleteTableRequest { TableName = tableName });
         }
