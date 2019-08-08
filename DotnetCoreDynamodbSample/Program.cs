@@ -1,6 +1,7 @@
 ﻿using Amazon.DynamoDBv2;
+using Amazon.DynamoDBv2.DataModel;
+using Amazon.DynamoDBv2.DocumentModel;
 using Amazon.DynamoDBv2.Model;
-using DotnetCoreDynamodbSample.Config;
 using DotnetCoreDynamodbSample.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -25,27 +26,14 @@ namespace DotnetCoreDynamodbSample
             // サービスの設定
             var serviceCollection = new ServiceCollection();
 
-            var dynamoDbConfig = new DynamoDbConfig();
-            configuration.Bind("DynamoDb", dynamoDbConfig);
-
-            if (dynamoDbConfig.LocalMode)
-            {
-                serviceCollection.AddSingleton<IAmazonDynamoDB>(sp =>
-                {
-                    var clientConfig = new AmazonDynamoDBConfig { ServiceURL = dynamoDbConfig.LocalServiceUrl };
-                    return new AmazonDynamoDBClient(clientConfig);
-                });
-            }
-            else
-            {
-                serviceCollection.AddAWSService<IAmazonDynamoDB>();
-            }
-
+            serviceCollection.AddDefaultAWSOptions(configuration.GetAWSOptions());
+            serviceCollection.AddAWSService<IAmazonDynamoDB>();
+            serviceCollection.AddTransient<IDynamoDBContext, DynamoDBContext>();
             serviceCollection.AddTransient<IDynamoDbService, DynamoDbService>();
             var service = serviceCollection.BuildServiceProvider().GetService<IDynamoDbService>();
 
             // サンプル実装
-            var tables = await service.ListTablesAsync();
+            var tables = await service.GetTableNameListAsync();
             Console.WriteLine(string.Join(",", tables));
 
             var tableName = "DynamoSample";
@@ -125,14 +113,29 @@ namespace DotnetCoreDynamodbSample
                     {":p", new AttributeValue {N = "1"}},
                     {":newattr", new AttributeValue {S = "someValue"}},
                 },
-                // This expression does the following:
-                // 1) Adds two new authors to the list
-                // 2) Reduces the price
-                // 3) Adds a new attribute to the item
-                // 4) Removes the ISBN attribute from the item
                 UpdateExpression = "ADD #A :auth SET #P = #P - :p, #NA = :newattr REMOVE #I"
             });
             outItem();
+
+            var entity = new SampleModel
+            {
+                Id = 301,
+                Title = "Book 301 Title",
+                ISBN = "11-11-11-12",
+                Price = 300,
+                Authors = new List<string> { "Author3", "Author4" }
+            };
+
+            await service.PutEntityAsync(entity);
+            var result = await service.GetEntityAsync<SampleModel>(301);
+
+            result.Price = 400;
+            await service.PutEntityAsync(result);
+
+            var condition = new List<ScanCondition> { new ScanCondition("Price", ScanOperator.Equal, 400) };
+            var results = await service.GetEntityListAsync<SampleModel>(condition);
+
+            await service.DeleteEntityAsync(results.FirstOrDefault());
 
             await service.DeleteItemAsync(new DeleteItemRequest
             {
@@ -143,5 +146,19 @@ namespace DotnetCoreDynamodbSample
 
             await service.DeleteTableAsync(new DeleteTableRequest { TableName = tableName });
         }
+    }
+
+    [DynamoDBTable("DynamoSample")]
+    public class SampleModel
+    {
+        public int Id { get; set; }
+
+        public string Title { get; set; }
+
+        public string ISBN { get; set; }
+
+        public int Price { get; set; }
+
+        public List<string> Authors { get; set; }
     }
 }
