@@ -9,16 +9,12 @@ namespace DotnetCoreDynamodbSample.Services
     public interface IDynamoDbService
     {
         Task<List<string>> GetTableNameListAsync(ListTablesRequest request = default);
-        Task<Dictionary<string, AttributeValue>> GetItemsAsync(GetItemRequest request);
         Task CreateTableAsync(CreateTableRequest request);
-        Task DeleteTableAsync(DeleteTableRequest request);
-        Task PutItemAsync(PutItemRequest request);
-        Task UpdateItemAsync(UpdateItemRequest request);
-        Task DeleteItemAsync(DeleteItemRequest request);
+        Task DeleteTableAsync(string tableName);
         Task<T> GetEntityAsync<T>(int id);
         Task<IEnumerable<T>> GetEntityListAsync<T>(IEnumerable<ScanCondition> conditions);
-        Task PutEntityAsync<T>(T input);
-        Task DeleteEntityAsync<T>(T input);
+        Task PutEntityAsync<T>(T input, bool isSkipVersionCheck = false);
+        Task DeleteEntityAsync<T>(T input, bool isSkipVersionCheck = false);
     }
 
     public class DynamoDbService : IDynamoDbService
@@ -45,64 +41,23 @@ namespace DotnetCoreDynamodbSample.Services
         }
 
         /// <summary>
-        /// 値を取得します。
-        /// </summary>
-        /// <param name="request"></param>
-        /// <returns></returns>
-        public async Task<Dictionary<string, AttributeValue>> GetItemsAsync(GetItemRequest request)
-        {
-            var res = await _client.GetItemAsync(request);
-            return res.Item;
-        }
-
-        /// <summary>
         /// テーブルを作成します。
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
         public async Task CreateTableAsync(CreateTableRequest request)
-        {
+        {            
             await _client.CreateTableAsync(request);
         }
 
         /// <summary>
         /// テーブルを削除します。
         /// </summary>
-        /// <param name="request"></param>
+        /// <param name="tableName"></param>
         /// <returns></returns>
-        public async Task DeleteTableAsync(DeleteTableRequest request)
+        public async Task DeleteTableAsync(string tableName)
         {
-            await _client.DeleteTableAsync(request);
-        }
-
-        /// <summary>
-        /// 値を保存します。
-        /// </summary>
-        /// <param name="request"></param>
-        /// <returns></returns>
-        public async Task PutItemAsync(PutItemRequest request)
-        {
-            await _client.PutItemAsync(request);
-        }
-
-        /// <summary>
-        /// 値を更新します。
-        /// </summary>
-        /// <param name="request"></param>
-        /// <returns></returns>
-        public async Task UpdateItemAsync(UpdateItemRequest request)
-        {
-            await _client.UpdateItemAsync(request);
-        }
-
-        /// <summary>
-        /// 値を削除します。
-        /// </summary>
-        /// <param name="request"></param>
-        /// <returns></returns>
-        public async Task DeleteItemAsync(DeleteItemRequest request)
-        {
-            await _client.DeleteItemAsync(request);
+            await _client.DeleteTableAsync(new DeleteTableRequest { TableName = tableName });
         }
 
         /// <summary>
@@ -113,7 +68,7 @@ namespace DotnetCoreDynamodbSample.Services
         /// <returns></returns>
         public async Task<T> GetEntityAsync<T>(int id)
         {
-            return await _context.LoadAsync<T>(id);
+            return await _context.LoadAsync<T>(id, new DynamoDBOperationConfig { ConsistentRead = true });
         }
 
         /// <summary>
@@ -124,7 +79,7 @@ namespace DotnetCoreDynamodbSample.Services
         /// <returns></returns>
         public async Task<IEnumerable<T>> GetEntityListAsync<T>(IEnumerable<ScanCondition> conditions)
         {
-            return await _context.ScanAsync<T>(conditions).GetRemainingAsync();
+            return await _context.ScanAsync<T>(conditions, new DynamoDBOperationConfig { ConsistentRead = true }).GetRemainingAsync();
         }
 
         /// <summary>
@@ -133,9 +88,9 @@ namespace DotnetCoreDynamodbSample.Services
         /// <typeparam name="T"></typeparam>
         /// <param name="input"></param>
         /// <returns></returns>
-        public async Task PutEntityAsync<T>(T input)
+        public async Task PutEntityAsync<T>(T input, bool isSkipVersionCheck = false)
         {
-            await _context.SaveAsync(input);
+            await _context.SaveAsync(input, new DynamoDBOperationConfig { SkipVersionCheck = isSkipVersionCheck });
         }
 
         /// <summary>
@@ -144,9 +99,9 @@ namespace DotnetCoreDynamodbSample.Services
         /// <typeparam name="T"></typeparam>
         /// <param name="input"></param>
         /// <returns></returns>
-        public async Task DeleteEntityAsync<T>(T input)
+        public async Task DeleteEntityAsync<T>(T input, bool isSkipVersionCheck = false)
         {
-            await _context.DeleteAsync(input);
+            await _context.DeleteAsync(input, new DynamoDBOperationConfig { SkipVersionCheck = isSkipVersionCheck });
         }
     }
 }
